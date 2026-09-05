@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1 Say Glass Challenge - Ultimate Phase 3</title>
+  <style>
+    :root {
+      --bg-color: #45412f;
+      --card-bg: #1f2833;
+      --accent-gold: #f39c12;
+      --accent-neon: #00f0ff;
+      --accent-red: #ff0055;
+      --accent-alien: #39ff14;
+      --text-color: #ffffff;
+      --fluid-color-p1: linear-gradient(180deg, #ff4e50, #f9d423);
+      --fluid-color-p2: linear-gradient(180deg, #00f0ff, #7000ff);
+      --fluid-color-p3: linear-gradient(180deg, #ff0055, #ff5500);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+      position: relative;
+      background:
+        radial-gradient(ellipse 700px 500px at 25% 15%, rgba(120, 114, 86, 0.18), transparent 60%),
+        radial-gradient(ellipse 600px 450px at 80% 75%, rgba(120, 114, 86, 0.14), transparent 60%),
+        radial-gradient(ellipse 900px 700px at 50% 100%, rgba(90, 85, 65, 0.16), transparent 65%),
+        linear-gradient(180deg, #575240 0%, #45412f 45%, #2a271b 100%);
+    }
+
+    /* Starfield + faint ship-hull panel lines drifting behind everything */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 8% 22%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 22% 68%, rgba(255,255,255,0.28), transparent),
+        radial-gradient(1.5px 1.5px at 38% 12%, rgba(255,255,255,0.38), transparent),
+        radial-gradient(1px 1px at 52% 82%, rgba(255,255,255,0.24), transparent),
+        radial-gradient(1.5px 1.5px at 68% 35%, rgba(200,200,200,0.3), transparent),
+        radial-gradient(1px 1px at 78% 58%, rgba(255,255,255,0.32), transparent),
+        radial-gradient(1.5px 1.5px at 90% 20%, rgba(200,200,200,0.3), transparent),
+        radial-gradient(1px 1px at 95% 88%, rgba(255,255,255,0.24), transparent);
+      background-size: 100% 100%;
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 90px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Container Shaking Animations */
+    @keyframes subtleShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-3px, 2px) rotate(-1deg); }
+      50% { transform: translate(3px, -1px) rotate(1deg); }
+      75% { transform: translate(-2px, -2px) rotate(0.5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    @keyframes intenseShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-6px, 4px) rotate(-2deg); }
+      40% { transform: translate(6px, -4px) rotate(2deg); }
+      60% { transform: translate(-5px, -3px) rotate(1.5deg); }
+      80% { transform: translate(5px, 3px) rotate(-1.5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.5s ease, box-shadow 0.5s ease;
+    }
+
+    .container.shake-warning {
+      animation: subtleShake 0.25s infinite;
+      border-color: #ff9900 !important;
+      box-shadow: 0 0 25px rgba(255, 153, 0, 0.6) !important;
+    }
+
+    .container.shake-critical {
+      animation: intenseShake 0.15s infinite;
+      border-color: var(--accent-red) !important;
+      box-shadow: 0 0 40px rgba(255, 0, 85, 0.8) !important;
+    }
+
+    /* Phase Dynamic Styles */
+    .container.phase-2 {
+      border-color: rgba(0, 240, 255, 0.4);
+      box-shadow: 0 10px 35px rgba(0, 240, 255, 0.2);
+    }
+
+    .container.phase-3 {
+      border-color: rgba(255, 0, 85, 0.5);
+      box-shadow: 0 10px 40px rgba(255, 0, 85, 0.3);
+    }
+
+    .phase-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(243, 156, 18, 0.2);
+      color: var(--accent-gold);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .phase-2 .phase-badge {
+      background: rgba(0, 240, 255, 0.2);
+      color: var(--accent-neon);
+    }
+
+    .phase-3 .phase-badge {
+      background: rgba(255, 0, 85, 0.2);
+      color: var(--accent-red);
+    }
+
+    .header h2 {
+      color: var(--accent-gold);
+      font-size: 24px;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      transition: color 0.5s;
+    }
+
+    .phase-2 .header h2 { color: var(--accent-neon); }
+    .phase-3 .header h2 { color: var(--accent-red); }
+
+    .header p {
+      font-size: 14px;
+      color: #c5c6c7;
+      margin-bottom: 15px;
+    }
+
+    /* Glass SVG Visual */
+    .glass-container {
+      position: relative;
+      width: 180px;
+      height: 240px;
+      margin: 0 auto 15px auto;
+    }
+
+    .glass-svg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+    }
+
+    /* Alien snake-eye glow pulse */
+    @keyframes alienPulse {
+      0%, 100% { opacity: 0.65; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.12); }
+    }
+
+    .alien-eye {
+      animation: alienPulse 1.8s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 0 3px var(--accent-alien));
+    }
+
+    .alien-eye.eye-left { animation-delay: 0.15s; }
+    .alien-eye.eye-right { animation-delay: 0.35s; }
+
+    @keyframes antennaGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .alien-antenna-tip {
+      animation: antennaGlow 1.2s ease-in-out infinite;
+    }
+
+    /* Liquid Inside Glass */
+    .liquid-container {
+      position: absolute;
+      bottom: 55px;
+      left: 32px;
+      width: 116px;
+      height: 118px;
+      clip-path: polygon(10% 0%, 90% 0%, 100% 15%, 78% 100%, 22% 100%, 0% 15%);
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .liquid {
+      width: 100%;
+      height: 0%;
+      background: var(--fluid-color-p1);
+      transition: height 0.8s ease-in-out, background 0.5s ease;
+      box-shadow: 0 0 15px rgba(249, 212, 35, 0.6);
+    }
+
+    .phase-2 .liquid {
+      background: var(--fluid-color-p2);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+    }
+
+    .phase-3 .liquid {
+      background: var(--fluid-color-p3);
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.9);
+    }
+
+    /* Progress & Stats */
+    .amount-display {
+      font-size: 30px;
+      font-weight: bold;
+      color: var(--accent-gold);
+      margin-bottom: 5px;
+      transition: color 0.5s;
+    }
+
+    .phase-2 .amount-display { color: var(--accent-neon); }
+    .phase-3 .amount-display { color: var(--accent-red); }
+
+    .target-text {
+      font-size: 13px;
+      color: #888888;
+      margin-bottom: 10px;
+    }
+
+    /* Almost There Warning Banner */
+    .near-goal-banner {
+      display: none;
+      background: linear-gradient(90deg, #ff0055, #ff9900);
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      animation: pulseBanner 0.6s infinite alternate;
+    }
+
+    @keyframes pulseBanner {
+      0% { opacity: 0.7; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* Stop Shake Button */
+    .stop-shake-btn {
+      display: none;
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid #ff9900;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+
+    .stop-shake-btn:hover {
+      background: rgba(255, 153, 0, 0.25);
+    }
+
+    /* Milestones */
+    .milestones {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 12px;
+      gap: 5px;
+    }
+
+    .milestone-item {
+      font-size: 11px;
+      opacity: 0.3;
+      transition: opacity 0.3s, color 0.3s, transform 0.3s;
+      flex: 1;
+    }
+
+    .milestone-item.active {
+      opacity: 1;
+      color: var(--accent-gold);
+      font-weight: bold;
+      transform: scale(1.05);
+    }
+
+    .phase-2 .milestone-item.active { color: var(--accent-neon); }
+    .phase-3 .milestone-item.active { color: var(--accent-red); }
+
+    /* Input Controls */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0,0,0,0.2);
+      padding: 15px;
+      border-radius: 12px;
+    }
+
+    .preset-btns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .btn-preset {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      background: rgba(243, 156, 18, 0.2);
+      border-color: var(--accent-gold);
+    }
+
+    .custom-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-amount {
+      flex: 1;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-amount:focus { border-color: var(--accent-gold); }
+
+    .btn {
+      background: var(--accent-gold);
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .phase-2 .btn-add { background: var(--accent-neon); }
+    .phase-3 .btn-add { background: var(--accent-red); color: white; }
+
+    .btn-reset {
+      background: transparent;
+      color: #666;
+      border: 1px solid #333;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    /* Lock overlay for custom amount */
+    .lock-overlay {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(0,0,0,0.35);
+      border: 1px dashed #555;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .lock-label {
+      font-size: 12px;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .unlock-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .unlock-group .input-amount {
+      letter-spacing: 4px;
+      text-align: center;
+    }
+
+    .btn-unlock {
+      background: var(--accent-alien);
+      color: #000;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .lock-shake {
+      animation: intenseShake 0.15s 3;
+    }
+
+    .btn-lock-now {
+      background: rgba(57, 255, 20, 0.12);
+      color: var(--accent-alien);
+      border: 1px solid rgba(57, 255, 20, 0.5);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-lock-now:hover {
+      background: rgba(57, 255, 20, 0.25);
+    }
+
+    .btn-lock-now:active {
+      transform: scale(0.95);
+    }
+
+    /* Alerts */
+    .alert-msg {
+      display: none;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 13px;
+      line-height: 1.4;
+      animation: pop 0.4s ease;
+    }
+
+    .alert-p1 { background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; }
+    .alert-p2 { background: rgba(0, 240, 255, 0.15); border: 1px solid var(--accent-neon); color: var(--accent-neon); }
+    .alert-p3 { background: rgba(255, 0, 85, 0.2); border: 1px solid var(--accent-red); color: #ff5588; }
+
+    .history-log {
+      margin-top: 15px;
+      text-align: left;
+      max-height: 80px;
+      overflow-y: auto;
+      font-size: 11px;
+      color: #777;
+      border-top: 1px solid #2a3542;
+      padding-top: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="container" id="challengeContainer">
+  <div class="phase-badge" id="phaseBadge">Phase 1: 1 Say Glass</div>
+  
+  <div class="header">
+    <h2 id="tableTitle">TABLE #05</h2>
+    <p id="challengeSub">1Say Glass Challenge (1,000,000 ₮ Goal)</p>
+  </div>
+
+  <div class="glass-container">
+    <div class="liquid-container">
+      <div class="liquid" id="liquid"></div>
+    </div>
+
+    <!-- Alien-tech cocktail glass: angular saucer bowl, paneled circuit lines, twin bowl eyes + stem eye, antenna tips -->
+    <svg class="glass-svg" viewBox="0 0 100 130">
+      <!-- outer bowl: asymmetric alien saucer shape -->
+      <path d="M 10 12 L 90 12 L 96 20 L 52 82 L 55 112 L 68 118 L 68 122 L 32 122 L 32 118 L 45 112 L 48 82 L 4 20 Z"
+            fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+      <!-- inner rim highlight -->
+      <path d="M 16 18 L 84 18 L 50 74" stroke="#ffffff" stroke-width="1.2" opacity="0.35" stroke-linecap="round" fill="none"/>
+      <!-- futuristic tech panel lines etched into the bowl -->
+      <path d="M 22 24 L 40 24 M 60 24 L 78 24" stroke="var(--accent-alien)" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+      <path d="M 28 44 L 38 44 M 62 44 L 72 44" stroke="var(--accent-alien)" stroke-width="1" opacity="0.35" stroke-linecap="round"/>
+      <path d="M 50 20 L 50 70" stroke="var(--accent-alien)" stroke-width="0.75" opacity="0.25" stroke-dasharray="2 3"/>
+      <!-- alien antennae from rim -->
+      <path d="M 20 12 C 14 4, 8 2, 6 -4" stroke="var(--accent-alien)" stroke-width="2" opacity="0.8" fill="none" stroke-linecap="round"/>
+      <circle class="alien-antenna-tip" cx="6" cy="-5" r="2.5" fill="var(--accent-alien)"/>
+      <path d="M 80 12 C 86 4, 92 2, 94 -4" stroke="var(--accent-alien)" stroke-width="2" opacity="0.8" fill="none" stroke-linecap="round"/>
+      <circle class="alien-antenna-tip" cx="94" cy="-5" r="2.5" fill="var(--accent-alien)"/>
+      <!-- twin snake-slit alien eyes set into the upper bowl -->
+      <g class="alien-eye eye-left">
+        <ellipse cx="32" cy="33" rx="4.2" ry="2.8" fill="var(--accent-alien)" opacity="0.85"/>
+        <rect x="31.25" y="30.3" width="1.5" height="5.4" rx="0.75" fill="#0b0c10"/>
+      </g>
+      <g class="alien-eye eye-right">
+        <ellipse cx="68" cy="33" rx="4.2" ry="2.8" fill="var(--accent-alien)" opacity="0.85"/>
+        <rect x="67.25" y="30.3" width="1.5" height="5.4" rx="0.75" fill="#0b0c10"/>
+      </g>
+      <!-- glowing snake-slit eye set into the stem, like a core sensor -->
+      <g class="alien-eye eye-stem">
+        <ellipse cx="50" cy="95" rx="5" ry="3.3" fill="var(--accent-alien)" opacity="0.8"/>
+        <rect x="49.1" y="91.6" width="1.8" height="6.8" rx="0.9" fill="#0b0c10"/>
+      </g>
+      <!-- base ring detail for a sleek tech-base feel -->
+      <path d="M 40 118 L 45 108 M 60 118 L 55 108" stroke="var(--accent-alien)" stroke-width="1" opacity="0.5" stroke-linecap="round"/>
+      <ellipse cx="50" cy="122" rx="18" ry="2.5" fill="none" stroke="var(--accent-alien)" stroke-width="0.75" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <div class="amount-display" id="amountDisplay">0 ₮</div>
+  <div class="target-text" id="targetText">1,000,000 ₮ хүртэл 1,000,000 ₮ дутуу</div>
+
+  <!-- Surpass Phase Warning Banner -->
+  <div class="near-goal-banner" id="nearGoalBanner">
+    🔥 CONGRATS! YOU ARE GONNA SURPASS THIS PHASE! 🔥
+  </div>
+
+  <!-- Stop Shake Button (shown only while container is shaking) -->
+  <button class="stop-shake-btn" id="stopShakeBtn" onclick="stopShake()">🛑 Чичиргээг зогсоох</button>
+
+  <!-- Dynamic Milestones Container -->
+  <div class="milestones" id="milestonesBox">
+    <div class="milestone-item" id="m1">300k<br>🍹 Shot</div>
+    <div class="milestone-item" id="m2">600k<br>🥗 Snack</div>
+    <div class="milestone-item" id="m3">1M<br>🍾 VIP Bottle</div>
+  </div>
+
+  <!-- Control Inputs -->
+  <div class="controls">
+    <div class="preset-btns">
+      <button class="btn-preset" onclick="addOrder(100000)">+100k</button>
+      <button class="btn-preset" onclick="addOrder(250000)">+250k</button>
+      <button class="btn-preset" onclick="addOrder(500000)">+500k</button>
+    </div>
+
+    <!-- Locked state: shown until correct code entered -->
+    <div class="lock-overlay" id="lockOverlay">
+      <div class="lock-label">🔒 Дурын дүн оруулах хаалттай. Нээх бол код оруулна уу:</div>
+      <div class="unlock-group">
+        <input type="password" id="unlockCode" class="input-amount" placeholder="Код" maxlength="4" inputmode="numeric">
+        <button class="btn-unlock" onclick="tryUnlock()">Тайлах</button>
+      </div>
+    </div>
+
+    <!-- Unlocked state: hidden until correct code entered -->
+    <div class="custom-input-group" id="customInputGroup" style="display:none;">
+      <input type="number" id="customAmount" class="input-amount" placeholder="Дурын дүн (₮)..." step="10000">
+      <button class="btn btn-add" onclick="addCustomOrder()">Нэмэх</button>
+      <button class="btn-lock-now" onclick="relock()" title="Одоо хаах">🔒</button>
+    </div>
+
+    <button class="btn btn-reset" onclick="resetChallenge()">Дахин эхлүүлэх</button>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert-msg alert-p1" id="phase1Success">
+    🎉 Phase 1 Амжилттай! Phase 2 (2.5M ₮) рүү шилжлээ! 🚀
+  </div>
+  <div class="alert-msg alert-p2" id="phase2Success">
+    ⚡ Phase 2 Итгэмээргүй байлаа! ULTIMATE Phase 3 (5.0M ₮) эхэллээ! 🔥
+  </div>
+  <div class="alert-msg alert-p3" id="phase3Success">
+    👑 РЕКОРД ЭВДЛЭЭ! Phase 3 буюу 5 САЯ ₮-ийн Ultimate VIP Champion ширээ боллоо! 🍾💎
+  </div>
+
+  <div class="history-log" id="historyLog"></div>
+</div>
+
+<script>
+  let currentAmount = 0;
+  let phase = 1;
+  let maxAmount = 1000000;
+  let shakeStopped = false;
+  const UNLOCK_CODE = '0808';
+
+  const phase1Milestones = [
+    { target: 300000, label: '300k<br>🍹 Shot', id: 'm1' },
+    { target: 600000, label: '600k<br>🥗 Snack', id: 'm2' },
+    { target: 1000000, label: '1M<br>🍾 VIP Bottle', id: 'm3' }
+  ];
+
+  const phase2Milestones = [
+    { target: 1500000, label: '1.5M<br>🧀 Hookah Set', id: 'm1' },
+    { target: 2000000, label: '2.0M<br>🍹 Bar Set', id: 'm2' },
+    { target: 2500000, label: '2.5M<br>💎 VIP Table', id: 'm3' }
+  ];
+
+  const phase3Milestones = [
+    { target: 3500000, label: '3.5M<br>🔥 Gold Champagne', id: 'm1' },
+    { target: 4200000, label: '4.2M<br>🍖 Chef Feast', id: 'm2' },
+    { target: 5000000, label: '5.0M<br>👑 KING OF NIGHT', id: 'm3' }
+  ];
+
+  // Sound Synth Generator (No external dependencies)
+  function playBeep(freq, type, duration) {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function playAlertSound() {
+    playBeep(600, 'square', 0.15);
+    setTimeout(() => playBeep(900, 'square', 0.25), 150);
+  }
+
+  function playPhaseWinSound() {
+    playBeep(400, 'triangle', 0.1);
+    setTimeout(() => playBeep(600, 'triangle', 0.1), 100);
+    setTimeout(() => playBeep(800, 'triangle', 0.1), 200);
+    setTimeout(() => playBeep(1200, 'sine', 0.4), 300);
+  }
+
+  // --- Lock / Unlock for custom amount field ---
+  function tryUnlock() {
+    const codeInput = document.getElementById('unlockCode');
+    const lockOverlay = document.getElementById('lockOverlay');
+    const customGroup = document.getElementById('customInputGroup');
+
+    if (codeInput.value === UNLOCK_CODE) {
+      lockOverlay.style.display = 'none';
+      customGroup.style.display = 'flex';
+      playBeep(1000, 'sine', 0.2);
+    } else {
+      lockOverlay.classList.add('lock-shake');
+      playBeep(200, 'sawtooth', 0.2);
+      setTimeout(() => lockOverlay.classList.remove('lock-shake'), 500);
+      codeInput.value = '';
+      codeInput.placeholder = '❌ Буруу код';
+    }
+  }
+
+  function relock() {
+    document.getElementById('lockOverlay').style.display = 'flex';
+    document.getElementById('customInputGroup').style.display = 'none';
+    document.getElementById('unlockCode').value = '';
+    document.getElementById('unlockCode').placeholder = 'Код';
+  }
+
+  // --- Stop shake control ---
+  function stopShake() {
+    shakeStopped = true;
+    const container = document.getElementById('challengeContainer');
+    container.classList.remove('shake-warning', 'shake-critical');
+    document.getElementById('stopShakeBtn').style.display = 'none';
+  }
+
+  function addCustomOrder() {
+    const input = document.getElementById('customAmount');
+    const val = parseInt(input.value);
+    if (!isNaN(val) && val > 0) {
+      addOrder(val);
+      input.value = '';
+      relock(); // require the code again for the next custom amount
+    }
+  }
+
+  function addOrder(amount) {
+    currentAmount += amount;
+    logTransaction(amount);
+    
+    // Check Phase Transitions
+    if (phase === 1 && currentAmount >= 1000000) {
+      phase = 2;
+      maxAmount = 2500000;
+      triggerSuperConfetti(300);
+      playPhaseWinSound();
+      showBanner('phase1Success');
+    } 
+    else if (phase === 2 && currentAmount >= 2500000) {
+      phase = 3;
+      maxAmount = 5000000;
+      triggerSuperConfetti(450);
+      playPhaseWinSound();
+      showBanner('phase2Success');
+    }
+    else if (phase === 3 && currentAmount >= 5000000) {
+      triggerSuperConfetti(600);
+      playPhaseWinSound();
+      showBanner('phase3Success');
+    } else {
+      triggerSuperConfetti(100); // Standard order explosion boosted
+    }
+
+    updateUI();
+  }
+
+  function showBanner(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  function resetChallenge() {
+    currentAmount = 0;
+    phase = 1;
+    maxAmount = 1000000;
+    shakeStopped = false;
+    document.getElementById('phase1Success').style.display = 'none';
+    document.getElementById('phase2Success').style.display = 'none';
+    document.getElementById('phase3Success').style.display = 'none';
+    document.getElementById('historyLog').innerHTML = '';
+    document.getElementById('stopShakeBtn').style.display = 'none';
+    relock();
+    updateUI();
+  }
+
+  function updateUI() {
+    const container = document.getElementById('challengeContainer');
+    const badge = document.getElementById('phaseBadge');
+    const sub = document.getElementById('challengeSub');
+    const nearGoalBanner = document.getElementById('nearGoalBanner');
+    const stopShakeBtn = document.getElementById('stopShakeBtn');
+    
+    // Apply Phase themes
+    container.classList.remove('phase-2', 'phase-3');
+    if (phase === 2) {
+      container.classList.add('phase-2');
+      badge.innerText = 'Phase 2: 2.5 Say Ultimate';
+      sub.innerText = 'Phase 2 Challenge (2,500,000 ₮ Goal)';
+      renderMilestones(phase2Milestones);
+    } else if (phase === 3) {
+      container.classList.add('phase-3');
+      badge.innerText = 'Phase 3: 5 Say RED ZONE';
+      sub.innerText = 'Phase 3 Challenge (5,000,000 ₮ Goal)';
+      renderMilestones(phase3Milestones);
+    } else {
+      badge.innerText = 'Phase 1: 1 Say Glass';
+      sub.innerText = '1Say Glass Challenge (1,000,000 ₮ Goal)';
+      renderMilestones(phase1Milestones);
+    }
+
+    // Remaining Calculation
+    const remaining = maxAmount - currentAmount;
+
+    // Check Shaking & Alert (250k or less remaining)
+    container.classList.remove('shake-warning', 'shake-critical');
+    if (remaining > 0 && remaining <= 250000) {
+      nearGoalBanner.style.display = 'block';
+      if (!shakeStopped) {
+        if (remaining <= 100000) {
+          container.classList.add('shake-critical');
+        } else {
+          container.classList.add('shake-warning');
+        }
+        stopShakeBtn.style.display = 'block';
+        playAlertSound();
+      } else {
+        stopShakeBtn.style.display = 'none';
+      }
+    } else {
+      nearGoalBanner.style.display = 'none';
+      stopShakeBtn.style.display = 'none';
+      shakeStopped = false; // re-arm shaking for the next near-goal window
+    }
+
+    // Percentage & Liquid Height
+    const percentage = Math.min((currentAmount / maxAmount) * 100, 100);
+    document.getElementById('liquid').style.height = percentage + '%';
+
+    // Text Display
+    document.getElementById('amountDisplay').innerText = currentAmount.toLocaleString() + ' ₮';
+    
+    if (remaining > 0) {
+      document.getElementById('targetText').innerText = `${maxAmount.toLocaleString()} ₮ хүртэл ${remaining.toLocaleString()} ₮ дутуу`;
+    } else {
+      document.getElementById('targetText').innerText = `Phase ${phase} Рекорд тогтоолоо!`;
+    }
+
+    // Milestone Check
+    const activeMilestones = phase === 1 ? phase1Milestones : (phase === 2 ? phase2Milestones : phase3Milestones);
+    document.getElementById('m1').classList.toggle('active', currentAmount >= activeMilestones[0].target);
+    document.getElementById('m2').classList.toggle('active', currentAmount >= activeMilestones[1].target);
+    document.getElementById('m3').classList.toggle('active', currentAmount >= activeMilestones[2].target);
+  }
+
+  function renderMilestones(milestones) {
+    document.getElementById('m1').innerHTML = milestones[0].label;
+    document.getElementById('m2').innerHTML = milestones[1].label;
+    document.getElementById('m3').innerHTML = milestones[2].label;
+  }
+
+  function logTransaction(amount) {
+    const history = document.getElementById('historyLog');
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `<span>+${amount.toLocaleString()} ₮</span> <span>${time}</span>`;
+    history.prepend(item);
+  }
+
+  /* Enhanced Particles Canvas */
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function triggerSuperConfetti(count) {
+    const colors = ['#f39c12', '#ff4e50', '#f9d423', '#00f0ff', '#7000ff', '#ff0055', '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: window.innerWidth / 2 + (Math.random() * 100 - 50),
+        y: window.innerHeight / 2 + 50,
+        vx: (Math.random() - 0.5) * 22,
+        vy: (Math.random() - 0.8) * 24,
+        size: Math.random() * 10 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1,
+        life: Math.random() * 0.015 + 0.008,
+        spin: Math.random() * 0.2
+      });
+    }
+  }
+
+  function animateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      let p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25; // Stronger Gravity
+      p.alpha -= p.life;
+
+      ctx.globalAlpha = Math.max(p.alpha, 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (p.alpha <= 0) particles.splice(i, 1);
+    }
+    requestAnimationFrame(animateConfetti);
+  }
+  animateConfetti();
+
+  // Initial setup
+  updateUI();
+</script>
+
+</body>
+</html>
