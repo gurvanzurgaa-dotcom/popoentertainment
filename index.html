@@ -2,7 +2,7 @@
 <html lang="mn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>1 Say Glass Challenge - Ultimate Phase 3</title>
   <style>
     :root {
@@ -23,6 +23,11 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, .input-amount {
+      touch-action: manipulation;
     }
 
     body {
@@ -369,7 +374,7 @@
       border-radius: 8px;
       padding: 10px 12px;
       color: #fff;
-      font-size: 14px;
+      font-size: 16px;
       outline: none;
     }
 
@@ -586,15 +591,9 @@
 
   <!-- Control Inputs -->
   <div class="controls">
-    <div class="preset-btns">
-      <button class="btn-preset" onclick="addOrder(100000)">+100k</button>
-      <button class="btn-preset" onclick="addOrder(250000)">+250k</button>
-      <button class="btn-preset" onclick="addOrder(500000)">+500k</button>
-    </div>
-
     <!-- Locked state: shown until correct code entered -->
     <div class="lock-overlay" id="lockOverlay">
-      <div class="lock-label">🔒 Дурын дүн оруулах хаалттай. Нээх бол код оруулна уу:</div>
+      <div class="lock-label">🔒 Дүн нэмэх хаалттай. Нээх бол код оруулна уу:</div>
       <div class="unlock-group">
         <input type="password" id="unlockCode" class="input-amount" placeholder="Код" maxlength="4" inputmode="numeric">
         <button class="btn-unlock" onclick="tryUnlock()">Тайлах</button>
@@ -602,10 +601,18 @@
     </div>
 
     <!-- Unlocked state: hidden until correct code entered -->
-    <div class="custom-input-group" id="customInputGroup" style="display:none;">
-      <input type="number" id="customAmount" class="input-amount" placeholder="Дурын дүн (₮)..." step="10000">
-      <button class="btn btn-add" onclick="addCustomOrder()">Нэмэх</button>
-      <button class="btn-lock-now" onclick="relock()" title="Одоо хаах">🔒</button>
+    <div id="unlockedControls" style="display:none; flex-direction: column; gap: 10px;">
+      <div class="preset-btns">
+        <button class="btn-preset" onclick="addOrder(100000)">+100k</button>
+        <button class="btn-preset" onclick="addOrder(250000)">+250k</button>
+        <button class="btn-preset" onclick="addOrder(500000)">+500k</button>
+      </div>
+
+      <div class="custom-input-group" id="customInputGroup">
+        <input type="number" id="customAmount" class="input-amount" placeholder="Дурын дүн (₮)..." step="10000">
+        <button class="btn btn-add" onclick="addCustomOrder()">Нэмэх</button>
+        <button class="btn-lock-now" onclick="relock()" title="Одоо хаах">🔒</button>
+      </div>
     </div>
 
     <button class="btn btn-reset" onclick="resetChallenge()">Дахин эхлүүлэх</button>
@@ -679,15 +686,15 @@
     setTimeout(() => playBeep(1200, 'sine', 0.4), 300);
   }
 
-  // --- Lock / Unlock for custom amount field ---
+  // --- Lock / Unlock for all amount controls (presets + custom) ---
   function tryUnlock() {
     const codeInput = document.getElementById('unlockCode');
     const lockOverlay = document.getElementById('lockOverlay');
-    const customGroup = document.getElementById('customInputGroup');
+    const unlockedControls = document.getElementById('unlockedControls');
 
     if (codeInput.value === UNLOCK_CODE) {
       lockOverlay.style.display = 'none';
-      customGroup.style.display = 'flex';
+      unlockedControls.style.display = 'flex';
       playBeep(1000, 'sine', 0.2);
     } else {
       lockOverlay.classList.add('lock-shake');
@@ -700,7 +707,7 @@
 
   function relock() {
     document.getElementById('lockOverlay').style.display = 'flex';
-    document.getElementById('customInputGroup').style.display = 'none';
+    document.getElementById('unlockedControls').style.display = 'none';
     document.getElementById('unlockCode').value = '';
     document.getElementById('unlockCode').placeholder = 'Код';
   }
@@ -719,7 +726,6 @@
     if (!isNaN(val) && val > 0) {
       addOrder(val);
       input.value = '';
-      relock(); // require the code again for the next custom amount
     }
   }
 
@@ -750,6 +756,7 @@
       triggerSuperConfetti(100); // Standard order explosion boosted
     }
 
+    relock(); // require the code again for the next amount, preset or custom
     updateUI();
   }
 
